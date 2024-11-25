@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './AthenaData.css';
 
 const AthenaData = () => {
     const [data, setData] = useState([]);
@@ -26,24 +27,28 @@ const AthenaData = () => {
     return (
         <div>
             <h2>Athena Query Results</h2>
-            <table>
-                <thead>
-                    <tr>
-                        {data[0]?.map((col, index) => (
-                            <th key={index}>{col}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {data.slice(1).map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                            {row.map((cell, cellIndex) => (
-                                <td key={cellIndex}>{cell}</td>
+            <div style={{ overflowX: 'auto' }}>
+                <table>
+                    <thead>
+                        <tr>
+                            {data[0]?.map((col, index) => (
+                                <th key={index}>{col.toUpperCase()}</th>
                             ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {data.slice(1).map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                                {row.map((cell, cellIndex) => (
+                                    <td key={cellIndex} style={{ textAlign: isNaN(cell) ? 'left' : 'right' }}>
+                                        {cell}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
