@@ -6,11 +6,22 @@ import boto3
 import time
 
 def lambda_handler(event, context):
+    # Extract query parameters from the event
+    query_params = event.get('queryStringParameters', {})
+    column = query_params.get('column')
+    value = query_params.get('value')
+
+    # Construct the query dynamically
+    if column and value:
+        query_string = f"SELECT * FROM test_bucket_12341 WHERE {column} = '{value}' LIMIT 10;"
+    else:
+        query_string = "SELECT * FROM test_bucket_12341 LIMIT 10;"  # Default query
+
     client = boto3.client('athena')
 
     # Start Query
     query_start = client.start_query_execution(
-        QueryString="SELECT * FROM test_bucket_12341 WHERE transmission IN ('Manual', 'Automatic') LIMIT 10;",
+        QueryString=query_string,
         QueryExecutionContext={'Database': 'testdb'},
         ResultConfiguration={'OutputLocation': 's3://test-bucket-12341-results/'}
     )
@@ -26,14 +37,20 @@ def lambda_handler(event, context):
 
     if status != 'SUCCEEDED':
         error_message = query_status['QueryExecution']['Status'].get('StateChangeReason', 'Unknown error')
-        raise Exception(f"Query failed with status: {status}. Reason: {error_message}")
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': f"Query failed with status: {status}. Reason: {error_message}"})
+        }
 
     # Fetch Results
     results = client.get_query_results(QueryExecutionId=query_id)
     rows = []
     for row in results['ResultSet']['Rows']:
         rows.append([col.get('VarCharValue') for col in row['Data']])
-    
+
     # Return response
     return {
         'statusCode': 200,
